@@ -11,6 +11,7 @@ python -m pip install .
 ## Notebooks
 
 To run the notebooks, download the `documentation/demo/` folder.
+The notebooks will be expanded and further detailed by early December.
 
 ## Updates
 
