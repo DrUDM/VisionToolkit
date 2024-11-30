@@ -11,9 +11,9 @@ python -m pip install .
 ## Notebooks
 
 To run the notebooks, download the `documentation/demo/` folder.
-The notebooks will be expanded and further detailed by early December.
+The notebooks will be expanded and further detailed by January.
 
 ## Updates
 
-Note that certain functions --- specifically `aoi_visualization`, `saliency_comparison`, `saccade_task` and `pursuit_task` --- are still under internal review and will be added by early December. 
+Note that certain functions --- specifically `aoi_visualization`, `saliency_comparison`, `saccade_task` and `pursuit_task` --- are still under internal review and will be added by January.
 Additionally, the RIM functionality is currently hosted in a separate Git repository due to its large size.
