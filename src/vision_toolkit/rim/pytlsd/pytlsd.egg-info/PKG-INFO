@@ -1,0 +1,10 @@
+Metadata-Version: 2.1
+Name: pytlsd
+Version: 0.0.4
+Summary: Transparent bindings of LSD (Line Segment Detector)
+Author: Iago Suarez
+Author-email: iagoh92@gmail.com
+Requires-Python: >=3.7
+License-File: LICENSE
+Provides-Extra: test
+Requires-Dist: pytest>=6.0; extra == "test"
