@@ -322,7 +322,7 @@ class AoIMultipleSequences:
             len(input) > 1 and type(input) == list
         ), "Input must be a list of Scanpath, or a list of BinarySegmentation, or a list of csv"
 
-        if isinstance(input[0], str):
+        if isinstance(input[0], str): 
             scanpaths = [Scanpath.generate(input_, **kwargs) for input_ in input]
 
         elif isinstance(input[0], BinarySegmentation):

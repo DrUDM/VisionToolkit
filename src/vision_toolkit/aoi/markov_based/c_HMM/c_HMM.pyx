@@ -189,8 +189,7 @@ def baum_welch(double[:,:] a_s, int n_s, int n_iters,
     
             xi[n] = tmp_
       
-        pi = gamma[0] / np.sum(gamma[0])
-    
+        pi = gamma[0] / np.sum(gamma[0]) 
         assert pi.size == n_s 
     
         for i in range(0, n_s): 
@@ -198,6 +197,8 @@ def baum_welch(double[:,:] a_s, int n_s, int n_iters,
                 if np.sum(gamma[-1:, i]) > 1e-15:
                     T[i, j] = (np.sum(xi[:-1, i, j])
                                / np.sum(gamma[:-1,i]))
+                else:
+                    T[i,j] = 1e-15
                  
         T /= np.sum(T, axis =1).reshape((n_s,1))
         c_T = T
@@ -233,7 +234,7 @@ def baum_welch(double[:,:] a_s, int n_s, int n_iters,
                                                      allow_singular=True)  
         c_emm_prob = emm_prob 
         iter_ += 1 
-        print(np.asarray(c_T))
+        
         
         
     Z = np.argmax(gamma, axis=1)

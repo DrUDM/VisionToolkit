@@ -45,8 +45,7 @@ def process_IMS(values, config, ref_image=None):
     ## To avoid signle point clusters
     for i in range(list(set(seq_))[-1] + 1):
         vals_ = np.argwhere(np.array(seq_) == int(i)).T[0]
-        if len(vals_) >= 2:
-            print(vals_)
+        if len(vals_) >= 2: 
             clus_.update({chr(i_ + 65): vals_})
             seq_[vals_] = i_
             centers_.update({chr(i_ + 65): np.mean(pos_[:, vals_], axis=1)})

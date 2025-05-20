@@ -36,10 +36,10 @@ src/vision_toolkit/aoi/identification_algorithms/I_KM.py
 src/vision_toolkit/aoi/identification_algorithms/I_MS.py
 src/vision_toolkit/aoi/identification_algorithms/__init__.py
 src/vision_toolkit/aoi/identification_algorithms/predefined.py
-src/vision_toolkit/aoi/markov_based/VHEM.py
 src/vision_toolkit/aoi/markov_based/__init__.py
 src/vision_toolkit/aoi/markov_based/fisher_kernel.py
 src/vision_toolkit/aoi/markov_based/hmm.py
+src/vision_toolkit/aoi/markov_based/joint_HMM.py
 src/vision_toolkit/aoi/markov_based/markov_based.py
 src/vision_toolkit/aoi/markov_based/transition_entropy.py
 src/vision_toolkit/aoi/markov_based/transition_matrix.py

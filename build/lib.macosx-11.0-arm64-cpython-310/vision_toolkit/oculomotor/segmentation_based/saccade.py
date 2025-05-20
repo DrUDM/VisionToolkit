@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
+from scipy.stats import gamma 
 
 from vision_toolkit.segmentation.processing.binary_segmentation import BinarySegmentation
 from vision_toolkit.visualization.oculomotor.main_sequence import plot_main_sequence
@@ -1240,7 +1241,48 @@ class SaccadeAnalysis(BinarySegmentation):
 
         return results
 
+
     def saccade_skewness_exponents(self, get_raw):
+        '''
+        
+
+        Parameters
+        ----------
+        get_raw : TYPE, optional
+            DESCRIPTION. The default is True.
+
+        Returns
+        -------
+        results : TYPE
+            DESCRIPTION.
+
+        '''
+        
+        p_sp_i = self.get_pk_vel_idx()
+        _ints = self.segmentation_results['saccade_intervals']  
+        
+        b_i = np.array(
+            [_int[0] for _int in _ints]
+                )
+        
+        s_l = np.array(
+            [_int[1] - _int[0] for _int in _ints]
+                )
+   
+        skw = (p_sp_i - b_i)/(s_l - 1) 
+        results = dict({
+            'skewness_exponent_mean': np.nanmean(skw),    
+            'skewness_exponent_sd': np.nanstd(skw, ddof = 1), 
+            'raw': skw
+                })
+        
+        if not get_raw:
+            del results['raw']
+         
+        return results
+    
+    
+    def saccade_gamma_skewness_exponents(self, get_raw):
         """
 
 
@@ -1256,19 +1298,21 @@ class SaccadeAnalysis(BinarySegmentation):
 
         """
 
-        p_sp_i = self.get_pk_vel_idx()
         _ints = self.segmentation_results["saccade_intervals"]
+        a_sp = self.data_set["absolute_speed"]
+        skw = []
+        
+        for _int in _ints:
+            l_a_sp = a_sp[_int[0] : _int[1]]
+            fit_shape, fit_loc, fit_scale=gamma.fit(l_a_sp)
+            skw.append(fit_shape)
 
-        b_i = np.array([_int[0] for _int in _ints])
-
-        s_l = np.array([_int[1] - _int[0] for _int in _ints])
-
-        skw = (p_sp_i - b_i) / (s_l - 1)
+         
         results = dict(
             {
                 "skewness_exponent_mean": np.nanmean(skw),
                 "skewness_exponent_sd": np.nanstd(skw, ddof=1),
-                "raw": skw,
+                "raw": np.array(skw),
             }
         )
 
@@ -1276,6 +1320,8 @@ class SaccadeAnalysis(BinarySegmentation):
             del results["raw"]
 
         return results
+
+
 
     def saccade_amplitude_duration_ratios(self, get_raw):
         """
