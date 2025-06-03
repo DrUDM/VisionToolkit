@@ -1,0 +1,176 @@
+python setup.py build_ext --inplace
+
+
+
+Segmentation:
+    - Binary:
+        - I_VT                                                      Implemented
+        - I_DiT                                                     Implemented
+        - I_DeT                                                     Implemented
+        - I_KF                                                      Implemented
+        - I_MST                                                     Implemented
+        - I_HMM                                                     Implemented
+        - I_2MC                                                     Implemented
+        
+    - Ternary:
+        - I_VVT                                                     Implemented
+        - I_VMP                                                     Implemented
+        - I_VDT                                                     Implemented
+        - I_BDT                                                     Implemented
+ 
+Ocolomotor:
+
+    - Segmentation_based:
+        - Fixation                                                  Implemented
+        - Saccade                                                   Implemented
+        - Saccade_task                                             To Implement
+        - Smooth_pursuit                                           To Implement
+        - Smooth_pursuit_task                                      To Implement
+        
+    - Signal_based:
+        - Frequency                                                 Implemented
+        - Stochastic                                                Implemented
+        - Topological                                               Implemented
+
+
+Scanpath:
+
+    - Single:
+        - Geometrical:
+            - Basic                                                To Implement
+            - BCEA                                                  Implemented
+            - Voronoi                                               Implemented
+            - k-Coefficient                                         Implemented
+            - ConvexHull                                            Implemented
+            - Fractal                                               Implemented
+            
+        - Saliency:
+            - SaliencyMap                                           Implemented
+          
+        - RQA: 
+            - Rate                                                  Implemented
+            - Laminarity                                            Implemented
+            - Determinism                                           Implemented
+            - CORM                                                  Implemented
+            - entropy                                               Implemented
+            
+    - Similarity:
+    
+        - Direct_comparison:
+            - Double_mapping:
+                - Mannan                                            Implemented
+                - EyeAnalysis                                       Implemented
+                - TDEDistance                                       Implemented
+                
+            - Elastic:
+                - Frechet                                           Implemented
+                - DTW                                               Implemented
+                
+        - Character_based:
+            - Levenstein                                            Implemented
+            - Generalized                                           Implemented
+            - NW                                                    Implemented
+        
+        - ScanMatch                                                 Implemented
+        - MultiMatch                                                Implemented
+        - Subsmatch                                                 Implemented
+            
+     
+        - CRQA:
+            - Cross_laminarity                                      Implemented
+            - Cross_determinism                                     Implemented
+            - Cross_entropy                                         Implemented
+            
+            
+            
+            
+    See https://github.com/tarunsharma1/saliency_metrics/blob/master/salience_metrics.py
+        - Pair_saliency:
+            - Pearson                                              To Implement
+            - KL                                                   To Implement
+            - EMD                                                  To Implement
+            - AUC                                                  To Implement
+                                            
+        - Saliency_reference
+            - NSS                                                   Implemented
+            - Percentile                                           To Implement
+            - Information_gain                                     To Implement
+            - AUC_Judd                                             To Implement
+            - AUC_Borji                                            To Implement
+         
+ 
+AoI:
+
+    - Identification:
+        - k_Means                                                   Implemented
+        - Mean_shift                                                Implemented
+        - DBSCAN                                                    Implemented
+        - Density peak                                              Implemented
+        - Affinity_propagation                                      Implemented
+    
+    - Markov_based:
+        - Transition_matrix                                         Implemented
+        - Successor_representation                                 To Implement
+        - Joint entropy                                             Implemented
+        - Stationary entropy                                        Implemented
+        - Conditional entropy                                       Implemented
+        - Mutual information                                        Implemented
+        - HMM                                                       Implemented
+        - Fischer vector                                            Implemented
+        - VHEM                                                    Not necessary
+    
+    - Deep_patterns:
+        - LZC                                                       Implemented
+        - N_grams                                                   Implemented
+        - SPAM                                                      Implemented
+        - T_Pattern                                               Not necessary
+
+    - GlobalAlignment: 
+        - Levenstein                                                Implemented
+        - Generalized                                               Implemented
+        - NW                                                        Implemented
+        
+    - Common Subsequence:
+    
+        - Local_alognment: 
+            - LCS                                                   Implemented
+            - SW                                                    Implemented
+            - eMine                                                 Implemented
+            
+        - TrendAnalysis                                             Implemented
+        - CDBA                                                      Implemented
+        - DotPlot                                                 Not necessary
+        
+    - Visualization:
+    
+        - Spatio_temporal:
+            - Dwell_time                                            Implemented
+            - Time_plot                                             Implemented     
+            - Scarf_diagram                                         Implemented
+            - 3D_cube                                              To Implement
+            - Sankey_diagram                                        Implemented
+            
+        - Transition:
+            - Directed_graph                                        Implemented
+            - Chord_diagram                                         Implemented
+            - Transition_flow                                       Implemented
+            - Word_tree                                            To Implement
+        
+         
+         
+         
+         
+         
+Improvements:
+
+    - verbose in class for fixations and saccades 
+    - I_KF angular 
+    - I_MST angular 
+    - horizontal_vertical_csd + horizontal_vertical_welch_csd
+    - RQA angular
+    - Add center definition for AoIs
+    
+    
+    
+    
+    

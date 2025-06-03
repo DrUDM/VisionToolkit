@@ -128,7 +128,7 @@ def baum_welch(double[:,:] a_s, int n_s, int n_iters,
     
     
     while iter_ < n_iters:
-        print(iter_)
+        #print(iter_)
         ## Forward-backward algorithm. 
         for k in range(0, n_s):
             alpha[0, k] = pi[k] * emm_prob[0, k] 

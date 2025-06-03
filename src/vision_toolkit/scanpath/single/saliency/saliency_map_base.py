@@ -6,60 +6,109 @@ from scipy import signal
 from scipy.ndimage import convolve  
 import matplotlib.pyplot as plt 
 
-from Vision.utils.binning import spatial_bin
-from Vision.visualization.single_scanpath import plot_saliency_map
+from vision_toolkit.utils.binning import spatial_bin
+from vision_toolkit.visualization.scanpath.single.saliency import plot_saliency_map
+
+from vision_toolkit.scanpath.scanpath_base import Scanpath
+from vision_toolkit.segmentation.processing.binary_segmentation import BinarySegmentation
 
  
-np.random.seed(141)
-
+ 
 
 class SaliencyMap:
 
     def __init__(self, 
-                 scanpaths, 
-                 size_plan_x, size_plan_y,
-                 comp_saliency_map = True):
+                 input,  
+                 comp_saliency_map = True, 
+                 **kwargs):
         """
         Inputs:
             - scanpaths = scanpath or list of scanpaths to convert as a saliency map  
             - pixel_number = size of the square saliency map
         """
         
-        if type(scanpaths) != list: 
+        verbose = kwargs.get("verbose", True)
+        display_results = kwargs.get("display_results", True)
+        
+      
+        std = kwargs.get(
+            "scanpath_saliency_gaussian_std", 5)
+        pixel_number = kwargs.get(
+            "scanpath_saliency_pixel_number", 100)
+        
+        if isinstance(input, list):
             
-            self.s_ = [scanpaths.values]
-            config = scanpaths.config
+            if isinstance(input[0], str):
+                scanpaths = [Scanpath.generate(input_, **kwargs) for input_ in input]
+
+            elif isinstance(input[0], BinarySegmentation):
+                scanpaths = [Scanpath.generate(input_, **kwargs) for input_ in input]
+
+            elif isinstance(input[0], Scanpath):
+                scanpaths = input
             
-        else: 
-            self.s_ = [scanpath.values for scanpath in scanpaths]
-            config = scanpaths[0].config
+            else:
+                raise ValueError(
+                    "Input must be a list of Scanpath, or a list of BinarySegmentation, or a list of csv"
+                )
         
-        self.display = config['display_results']
-        self.std = config['saliency_gaussian_std']
+        else:
+            if isinstance(input, str):
+                scanpaths = [Scanpath.generate(input, **kwargs)]
+
+            elif isinstance(input, BinarySegmentation):
+                scanpaths = [Scanpath.generate(input, **kwargs)]
+
+            elif isinstance(input, Scanpath):
+                scanpaths = [input]
+            
+            else:
+                raise ValueError(
+                    "Input must be a a Scanpath, or a BinarySegmentation, or a csv"
+                )
+             
+        self.scanpaths = scanpaths
         
-        pixel_number = config['saliency_pixel_number']
+        self.scanpaths[0].config.update(
+            {
+                "scanpath_saliency_gaussian_std": std,
+                "scanpath_saliency_pixel_number": pixel_number,
+                "verbose": verbose,
+                "display_results": display_results
+            }
+        )
         
+        self.saliency_map = None 
+        
+        self.size_plan_x = self.scanpaths[0].config['size_plan_x']
+        self.size_plan_y = self.scanpaths[0].config['size_plan_y']
+        
+        for scanpath in self.scanpaths:
+            assert scanpath.config['size_plan_x'] == self.size_plan_x, 'All recordings must have the same "size_plan_x" and "size_plan_y" values'
+            assert scanpath.config['size_plan_y'] == self.size_plan_y, 'All recordings must have the same "size_plan_x" and "size_plan_y" values'
+        
+          
         if (pixel_number % 2) == 0:
             self.p_n = pixel_number + 1
         
         else:
             self.p_n = pixel_number
-            
+        self.std = std
+        
         self.s_b = [] 
         
-        for seq in self.s_: 
-            
+        for seq in [scanpath.values for scanpath in self.scanpaths]: 
             self.s_b.append(spatial_bin(seq[0:2], 
                                         self.p_n, self.p_n,
-                                        size_plan_x, size_plan_y))
+                                        self.size_plan_x, self.size_plan_y))
         
-        if comp_saliency_map:
-            
-            self.s_m = self.comp_saliency_map(self.s_b)
-            
-            if self.display:
-                plot_saliency_map(self.s_m)
-        
+        if comp_saliency_map: 
+            self.saliency_map = self.comp_saliency_map(self.s_b)
+             
+            if display_results:
+                plot_saliency_map(self.saliency_map)
+         
+        self.scanpaths[0].verbose()
         
         
     def comp_saliency_map(self, s_b):
@@ -97,7 +146,14 @@ class SaliencyMap:
         
         return s_m
     
+    
+  
+    
  
+def scanpath_saliency_map(input, **kwargs):
+   
+    saliency_map_i = SaliencyMap(input, **kwargs)
+    results = dict({"salency_map": saliency_map_i.saliency_map})
 
-
+    return results
        

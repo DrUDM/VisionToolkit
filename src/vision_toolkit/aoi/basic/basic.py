@@ -86,6 +86,7 @@ class AoIBasicAnalysis:
 
         return results
 
+
     def AoI_BCEA(self, BCEA_probability, get_raw):
         """
 
@@ -129,6 +130,7 @@ class AoIBasicAnalysis:
 
         return results
 
+
     def AoI_weighted_BCEA(self, BCEA_probability):
         """
 
@@ -169,6 +171,7 @@ class AoIBasicAnalysis:
         )
 
         return results
+
 
     def BCEA(self, x_a, y_a, probability):
         """

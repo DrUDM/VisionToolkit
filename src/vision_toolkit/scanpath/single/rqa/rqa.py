@@ -12,7 +12,7 @@ from vision_toolkit.visualization.scanpath.single.rqa import (
     plot_RQA_laminarity)
 
  
-
+## See https://drive.google.com/file/d/14mKqSnkGl08jzpgX_aRl5qsT4TqKDjk6/view
 
 class RQAAnalysis(RecurrenceBase):
     def __init__(self, input, **kwargs):
@@ -72,6 +72,7 @@ class RQAAnalysis(RecurrenceBase):
             )
             * 0.015
         )
+    
         self.scanpath.config.update(
             {
                 "scanpath_RQA_distance_threshold": kwargs.get(
@@ -80,6 +81,7 @@ class RQAAnalysis(RecurrenceBase):
                 "scanpath_RQA_minimum_length": kwargs.get(
                     "scanpath_RQA_minimum_length", 3
                 ),
+                "verbose": verbose
             }
         )
 
@@ -113,7 +115,7 @@ class RQAAnalysis(RecurrenceBase):
 
         if display_results:
             plot_RQA(self.r_m)
-
+ 
         if verbose:
             print("...RQA Analysis done\n")
 
@@ -166,7 +168,7 @@ class RQAAnalysis(RecurrenceBase):
 
         return results
 
-    def scanapath_RQA_laminarity(self, display_results):
+    def scanpath_RQA_laminarity(self, display_results):
         """
 
 
@@ -204,7 +206,7 @@ class RQAAnalysis(RecurrenceBase):
 
         return results
 
-    def scanapath_RQA_determinism(self, display_results):
+    def scanpath_RQA_determinism(self, display_results):
         """
 
 
@@ -222,7 +224,7 @@ class RQAAnalysis(RecurrenceBase):
 
         for d in d_set:
             s_l += len(d)
-
+      
         det = (100 / self.r_p) * s_l
 
         if self.scanpath.config["display_results"]:
@@ -238,7 +240,7 @@ class RQAAnalysis(RecurrenceBase):
 
         return results
 
-    def scanapath_RQA_CORM(self, display_results):
+    def scanpath_RQA_CORM(self, display_results):
         """
 
 
@@ -272,7 +274,7 @@ class RQAAnalysis(RecurrenceBase):
 
         return results
 
-    def scanapath_RQA_entropy(self, display_results):
+    def scanpath_RQA_entropy(self, display_results):
         """
 
 
@@ -305,66 +307,66 @@ class RQAAnalysis(RecurrenceBase):
         return results
 
 
-def scanapath_RQA_recurrence_rate(input, **kwargs):
+def scanpath_RQA_recurrence_rate(input, **kwargs):
     display_results = kwargs.get("display_results", True)
 
     if isinstance(input, RQAAnalysis):
-        results = input.scanapath_RQA_recurrence_rate(display_results)
+        results = input.scanpath_RQA_recurrence_rate(display_results)
 
     else:
         geometrical_analysis = RQAAnalysis(input, **kwargs)
-        results = geometrical_analysis.scanapath_RQA_recurrence_rate(display_results)
+        results = geometrical_analysis.scanpath_RQA_recurrence_rate(display_results)
 
     return results
 
 
-def scanapath_RQA_laminarity(input, **kwargs):
+def scanpath_RQA_laminarity(input, **kwargs):
     display_results = kwargs.get("display_results", True)
 
     if isinstance(input, RQAAnalysis):
-        results = input.scanapath_RQA_laminarity(display_results)
+        results = input.scanpath_RQA_laminarity(display_results)
 
     else:
         geometrical_analysis = RQAAnalysis(input, **kwargs)
-        results = geometrical_analysis.scanapath_RQA_laminarity(display_results)
+        results = geometrical_analysis.scanpath_RQA_laminarity(display_results)
 
     return results
 
 
-def scanapath_RQA_determinism(input, **kwargs):
+def scanpath_RQA_determinism(input, **kwargs):
     display_results = kwargs.get("display_results", True)
 
     if isinstance(input, RQAAnalysis):
-        results = input.scanapath_RQA_determinism(display_results)
+        results = input.scanpath_RQA_determinism(display_results)
 
     else:
         geometrical_analysis = RQAAnalysis(input, **kwargs)
-        results = geometrical_analysis.scanapath_RQA_determinism(display_results)
+        results = geometrical_analysis.scanpath_RQA_determinism(display_results)
 
     return results
 
 
-def scanapath_RQA_CORM(input, **kwargs):
+def scanpath_RQA_CORM(input, **kwargs):
     display_results = kwargs.get("display_results", True)
 
     if isinstance(input, RQAAnalysis):
-        results = input.scanapath_RQA_CORM(display_results)
+        results = input.scanpath_RQA_CORM(display_results)
 
     else:
         geometrical_analysis = RQAAnalysis(input, **kwargs)
-        results = geometrical_analysis.scanapath_RQA_CORM(display_results)
+        results = geometrical_analysis.scanpath_RQA_CORM(display_results)
 
     return results
 
 
-def scanapath_RQA_entropy(input, **kwargs):
+def scanpath_RQA_entropy(input, **kwargs):
     display_results = kwargs.get("display_results", True)
 
     if isinstance(input, RQAAnalysis):
-        results = input.scanapath_RQA_entropy(display_results)
+        results = input.scanpath_RQA_entropy(display_results)
 
     else:
         geometrical_analysis = RQAAnalysis(input, **kwargs)
-        results = geometrical_analysis.scanapath_RQA_entropy(display_results)
+        results = geometrical_analysis.scanpath_RQA_entropy(display_results)
 
     return results

@@ -1999,6 +1999,21 @@ def saccade_skewness_exponents(input, **kwargs):
     return results
 
 
+def saccade_gamma_skewness_exponents(input, **kwargs):
+    get_raw = kwargs.get("get_raw", True)
+
+    if isinstance(input, SaccadeAnalysis):
+        results = input.saccade_gamma_skewness_exponents(get_raw)
+        input.verbose(dict({"get_raw": get_raw}))
+
+    else:
+        saccade_analysis = SaccadeAnalysis.generate(input, **kwargs)
+        results = saccade_analysis.saccade_gamma_skewness_exponents(get_raw)
+        saccade_analysis.verbose(dict({"get_raw": get_raw}))
+
+    return results
+
+
 def saccade_amplitude_duration_ratios(input, **kwargs):
     get_raw = kwargs.get("get_raw", True)
 

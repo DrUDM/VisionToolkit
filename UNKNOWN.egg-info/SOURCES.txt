@@ -1,0 +1,11 @@
+README.md
+setup.py
+UNKNOWN.egg-info/PKG-INFO
+UNKNOWN.egg-info/SOURCES.txt
+UNKNOWN.egg-info/dependency_links.txt
+UNKNOWN.egg-info/top_level.txt
+src/vision_toolkit/aoi/common_subsequence/local_alignment/c_alignment_algorithms/c_alignment_algorithms.cpp
+src/vision_toolkit/aoi/markov_based/c_HMM/c_HMM.c
+src/vision_toolkit/scanpath/similarity/c_comparison_algorithms/c_comparison_algorithms.cpp
+src/vision_toolkit/segmentation/segmentation_algorithms/c_I_DeT/c_I_DeT.cpp
+src/vision_toolkit/segmentation/segmentation_algorithms/c_I_HMM/c_I_HMM.c

@@ -27,7 +27,7 @@ from .oculomotor.segmentation_based.saccade import (
     saccade_peak_velocities, saccade_peak_velocity_amplitude_ratios,
     saccade_peak_velocity_duration_ratios,
     saccade_peak_velocity_velocity_ratios, saccade_skewness_exponents,
-    #saccade_gamma_skewness_exponents,
+    saccade_gamma_skewness_exponents,
     saccade_successive_deviations, saccade_travel_distances)
 from .oculomotor.signal_based.frequency import (CrossFrequencyAnalysis,
                                                 FrequencyAnalysis,

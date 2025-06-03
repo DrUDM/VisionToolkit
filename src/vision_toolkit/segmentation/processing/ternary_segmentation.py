@@ -47,10 +47,18 @@ class TernarySegmentation:
                 "smoothing": kwargs.get("smoothing", "savgol"),
                 "distance_type": kwargs.get("distance_type", "angular"),
                 "min_int_size": kwargs.get("min_int_size", 2),
+                
+                # To manually set pursuit startr and end point
+                "pursuit_start_idx": kwargs.get("pursuit_start_idx", 0), 
+                "pursuit_end_idx": kwargs.get("pursuit_end_idx", None), 
+                
                 "display_results": kwargs.get("display_results", True),
                 "display_segmentation": kwargs.get("display_segmentation", False),
                 "display_true_segmentation": kwargs.get(
                     "display_true_segmentation", False
+                ),
+                "display_segmentation_path": kwargs.get(
+                    "display_segmentation_path", None
                 ),
                 "verbose": kwargs.get("verbose", True),
             }
@@ -83,8 +91,8 @@ class TernarySegmentation:
 
         if segmentation_method == "I_VVT":
             if config["distance_type"] == "euclidean":
-                s_t = vf_diag * 0.5
-                p_t = vf_diag * 0.15
+                s_t = vf_diag * 1.
+                p_t = vf_diag * 0.5
 
                 config.update(
                     {
@@ -101,18 +109,18 @@ class TernarySegmentation:
                 config.update(
                     {
                         "IVVT_saccade_threshold": kwargs.get(
-                            "IVVT_saccade_threshold", 40
+                            "IVVT_saccade_threshold", 5
                         ),
                         "IVVT_pursuit_threshold": kwargs.get(
-                            "IVVT_pursuit_threshold", 7
+                            "IVVT_pursuit_threshold", 1.2
                         ),
                     }
                 )
 
         elif segmentation_method == "I_VDT":
             if config["distance_type"] == "euclidean":
-                s_t = vf_diag * 0.5
-                di_t = 0.02 * vf_diag
+                s_t = vf_diag * 5
+                di_t = 0.005 * vf_diag
 
                 config.update(
                     {
@@ -168,7 +176,7 @@ class TernarySegmentation:
                             "IVMP_saccade_threshold", 40
                         ),
                         "IVMP_rayleigh_threshold": kwargs.get(
-                            "IVMP_rayleigh_threshold", 0.50
+                            "IVMP_rayleigh_threshold", 0.20
                         ),
                         "IVMP_window_duration": kwargs.get(
                             "IVMP_window_duration", 0.050
@@ -222,6 +230,7 @@ class TernarySegmentation:
                 )
 
         self.config = config
+        self.is_verbose = config["verbose"]
 
         self.distances = dict(
             {
@@ -239,40 +248,31 @@ class TernarySegmentation:
             }
         )
 
-        self.verbose = config["verbose"]
-
+         
         self.segmentation_results = None
         self.events = None
 
+
+
     def process(self, labels=True):
-        """
-
-        Returns
-        -------
-        None.
-
-        """
+    
+    
         self.segmentation_results = self.dict_methods[
             self.config["segmentation_method"]
         ](self.data_set, self.config)
-
-        path = "output/figs/ternary_segmentation_{sm}_2D".format(
-            sm=self.config["segmentation_method"]
-        )
-
+        
+     
         display_ternary_segmentation(
             self.data_set,
             self.config,
             self.segmentation_results["pursuit_intervals"],
-            _color="seagreen",
-            path=path,
+            _color="seagreen", 
         )
-
+    
         self.events = self.get_events(labels)
-
-        if self.config["verbose"]:
+    
+        if self.is_verbose:  # Updated to use is_verbose
             print("\n --- Config used: ---\n")
-
             for it in self.config.keys():
                 print(
                     "# {it}:{esp}{val}".format(
@@ -280,33 +280,40 @@ class TernarySegmentation:
                     )
                 )
             print("\n")
+             
 
+
+    def verbose(self, add_=None):
+        if self.is_verbose:  # Updated to use is_verbose
+            print("\n --- Config used: ---\n")
+            for it in self.config.keys():
+                print(
+                    "# {it}:{esp}{val}".format(
+                        it=it, esp=" " * (50 - len(it)), val=self.config[it]
+                    )
+                )
+            if add_ is not None:
+                for it in add_.keys():
+                    print(
+                        "# {it}:{esp}{val}".format(
+                            it=it, esp=" " * (50 - len(it)), val=add_[it]
+                        )
+                    )
+                print("\n")
+            
+            
+            
     @classmethod
-    def generate(cls, input_df, sampling_frequency, segmentation_method, **kwargs):
-        """
-
-        Parameters
-        ----------
-        input_df : TYPE
-            DESCRIPTION.
-        sampling_frequency : TYPE
-            DESCRIPTION.
-        segmentation_method : TYPE
-            DESCRIPTION.
-        **kwargs : TYPE
-            DESCRIPTION.
-
-        Returns
-        -------
-        segmentation_analysis : TYPE
-            DESCRIPTION.
-
-        """
+    def generate(cls, input_df, **kwargs):
+        kwargs_copy = kwargs.copy()
+        sampling_frequency = kwargs_copy.pop("sampling_frequency", 250)
+        segmentation_method = kwargs_copy.pop("segmentation_method", 'I_VMP')
         segmentation_analysis = cls(
-            input_df, sampling_frequency, segmentation_method, **kwargs
+            input_df, sampling_frequency, segmentation_method, **kwargs_copy
         )
-
         return segmentation_analysis
+
+
 
     def get_events(self, labels):
         """

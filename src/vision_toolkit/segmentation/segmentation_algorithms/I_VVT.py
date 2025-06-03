@@ -32,10 +32,10 @@ def process_IVVT(data_set, config):
 
     # An additional threshold is used for pursuits
     i_purs = np.where((a_sp > T_p) & (a_sp <= T_s), 1, 0)
-
+    
     # The remaining points are fixations
     i_fix = np.where(a_sp <= T_p, 1, 0)
-
+    print(a_sp)
     if config["verbose"]:
         print("\n...VVT Identification done\n")
         print("--- Execution time: %s seconds ---" % (time.time() - start_time))
