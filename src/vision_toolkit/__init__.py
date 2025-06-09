@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 
+## For reference image mapping
+from .reference_image_mapper.main import processing_rim
 
 ## For Oculomotor Processing
 from .oculomotor.segmentation_based.fixation import (

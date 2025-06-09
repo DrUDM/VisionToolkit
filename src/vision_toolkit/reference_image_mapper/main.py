@@ -15,7 +15,7 @@ from matplotlib import pyplot as plt
 # import matplotlib.animation as animation
 
 # from gluestick import batch_to_np, numpy_image_to_torch, GLUESTICK_ROOT
-from drawing import plot_images, plot_matches
+from vision_toolkit.reference_image_mapper.drawing import plot_images, plot_matches
 from gluestick.models.two_view_pipeline import TwoViewPipeline
 
 import gluestick
