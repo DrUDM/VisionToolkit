@@ -47,13 +47,25 @@ from.oculomotor.segmentation_based.pursuit import (
     pursuit_distance,
     pursuit_efficiency
     )
+
 from .oculomotor.segmentation_based.pursuit_task import (
     PursuitTask, 
     pursuit_task_count,
     pursuit_task_frequency,
     pursuit_task_duration,
     pursuit_task_proportion,
-    pursuit_task_slope_ratios
+    pursuit_task_velocity,
+    pursuit_task_velocity_means,
+    pursuit_task_peak_velocity,
+    pursuit_task_amplitude, 
+    pursuit_task_distance, 
+    pursuit_task_efficiency,
+    pursuit_task_slope_ratios,
+    pursuit_task_crossing_time, 
+    pursuit_task_overall_gain,
+    pursuit_task_sinusoidal_phase,
+    pursuit_task_accuracy,
+    pursuit_task_entropy
     )
 
 

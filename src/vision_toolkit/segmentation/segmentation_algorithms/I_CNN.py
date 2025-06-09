@@ -22,8 +22,8 @@ from sklearn.metrics import classification_report
 import matplotlib.pyplot as plt 
 import time
 
-from Vision.segmentation_src.utils.segmentation_utils import interval_merging
-from Vision.segmentation_src.utils.segmentation_utils import centroids_from_ints
+from vision_toolkit.utils.segmentation_utils import interval_merging
+from vision_toolkit.utils.segmentation_utils import centroids_from_ints
 
 
 

@@ -8,7 +8,7 @@ np.random.seed(1)
  
 
 ## For Bineary Segmentation
-
+'''
 bs = v.BinarySegmentation(root + 'data_1.csv', 
                         sampling_frequency = 256,  
                         segmentation_method = 'I_VT',
@@ -59,7 +59,24 @@ bs = v.BinarySegmentation(root + 'data_1.csv',
                         size_plan_x = 1200,
                         size_plan_y = 800)
 
+bs = v.BinarySegmentation(root + 'data_1.csv', 
+                        sampling_frequency = 256,  
+                        segmentation_method = 'I_HMM',
+                        distance_type = 'angular',                        
+                        display_segmentation = True,
+                        size_plan_x = 1200,
+                        size_plan_y = 800)
+'''
+bs = v.BinarySegmentation(root + 'data_1.csv', 
+                        sampling_frequency = 256,  
+                        segmentation_method = 'I_RF',
+                        distance_type = 'angular',                        
+                        display_segmentation = True,
+                        size_plan_x = 1200,
+                        size_plan_y = 800)
 
+
+'''
 ts = v.TernarySegmentation('dataset/DS_Hollywood2/' + 'gaze_s1.csv', 
                             sampling_frequency = 500, 
                             segmentation_method = 'I_VVT',  
@@ -88,7 +105,7 @@ ts = v.TernarySegmentation('dataset/DS_Hollywood2/' + 'gaze_s1.csv',
                             size_plan_x = 475.0,
                             size_plan_y = 280.0)
  
-
+'''
 
  
 
@@ -124,7 +141,7 @@ ts = v.TernarySegmentation('dataset/DS_Hollywood2/' + 'gaze_s1.csv',
 
 
 
-
+'''
 ## For Saccades
 sa = v.SaccadeAnalysis(bs)
 print(sa.saccade_count())
@@ -432,7 +449,7 @@ cfa = v.CrossFrequencyAnalysis([root + 'data_1.csv', root + 'data_2.csv'],
 
 
 print(cfa.cross_spectral_density(cross_data_type='velocity'))
-
+'''
 
 
 

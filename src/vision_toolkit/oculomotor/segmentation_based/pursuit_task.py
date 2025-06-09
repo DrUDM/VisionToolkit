@@ -2,6 +2,8 @@
 
 import numpy as np
 import pandas as pd
+import scipy.optimize as optimize 
+import scipy 
 
 from vision_toolkit.segmentation.processing.ternary_segmentation import TernarySegmentation 
 from vision_toolkit.utils.segmentation_utils import interval_merging 
@@ -294,6 +296,7 @@ class PursuitTask(TernarySegmentation):
     
      
     def pursuit_task_slope_ratios(self):
+        
         _ints = self.pursuit_intervals
         d_t = 1 / self.config['sampling_frequency']
         s_idx = self.config['pursuit_start_idx']
@@ -310,25 +313,11 @@ class PursuitTask(TernarySegmentation):
         s_r = dict({'x': [], 'y': []})
     
         for _int in _ints:
-            # Validate interval
-            if _int[0] >= _int[1]:
-                print(f"Skipping invalid interval: {_int}")
-                continue
-    
-            # Ensure interval indices are within bounds
-            if _int[0] < 0 or _int[1] >= len(pos['x']):
-                print(f"Skipping out-of-bounds interval: {_int}")
-                continue
-    
+     
             # Adjust theoretical data indices
             theo_start = max(0, _int[0] - s_idx)
-            theo_end = _int[1] - s_idx + 1
-    
-            # Ensure theoretical indices are valid
-            if theo_start >= theo_end or theo_end > len(theo['x']):
-                print(f"Skipping invalid theoretical indices: [{theo_start}, {theo_end}]")
-                continue
-    
+            theo_end = min(len(theo['x']), _int[1] - s_idx + 1)
+     
             for _dir in ['x', 'y']:
                 l_p_e = pos[_dir][_int[0]: _int[1] + 1]
                 l_p_t = theo[_dir][theo_start: theo_end]
@@ -336,6 +325,7 @@ class PursuitTask(TernarySegmentation):
                 # Ensure equal lengths for polynomial fitting
                 min_len = min(len(l_p_e), len(l_p_t))
                 if min_len < 2:  # Need at least 2 points for polyfit
+                    print('4')
                     print(f"Skipping interval with insufficient length: {_int}, min_len={min_len}")
                     continue
     
@@ -365,55 +355,350 @@ class PursuitTask(TernarySegmentation):
         for _dir in ['x', 'y']:
             s_r[_dir] = np.array(s_r[_dir]) if s_r[_dir] else np.array([])
     
-        result = dict({'slope ratio': s_r})
-        return result
-    
-    
-    def pursuit_task_gain(self, _type = 'weighted'):
-        
-        s_r = self.slope_ratios()
-        
-        a_i = np.array(self.pursuit_intervals) + np.array([[0, 1]])
-        a_d = np.array(a_i[:,1] - a_i[:,0])
+        results = dict({'slope ratios': s_r})
       
-        if _type == 'adjusted':
-            p_p = self.proportion()
+        return results
+    
+    
+    
+    def pursuit_task_crossing_time(self, tolerance):
+        """
+        Calculate the first time the eye position matches the theoretical target position within a tolerance.
+    
+        Parameters
+        ----------
+        tolerance : float, optional
+            Maximum position difference (e.g., degrees or pixels) to consider a match. Default is 1.0.
+    
+        Returns
+        -------
+        dict
+            Dictionary with keys 'x' and 'y', containing the crossing time (seconds) for each direction.
+            Returns None for a direction if no crossing occurs within the pursuit period.
+    
+        Notes
+        -----
+        - Based on De Brouwer et al. (2002), position error thresholds of 0.5–2 degrees trigger catch-up saccades.
+        - Crossing time is the earliest time the position error falls below the tolerance.
+        """
+        sampling_frequency = self.config['sampling_frequency']
+        time = np.arange(len(self.data_set['x_pursuit'])) / sampling_frequency
+        
+        crossings = {'x': None, 'y': None}
+        
+        for direction in ['x', 'y']:
+            eye_pos = self.data_set[f'{direction}_pursuit']
+            target_pos = self.data_set[f'{direction}_theo_pursuit']
             
-        gs = dict({})
-        for _dir in ['x', 'y']:
+            # Ensure equal lengths
+            min_len = min(len(eye_pos), len(target_pos))
+            eye_pos = eye_pos[:min_len]
+            target_pos = target_pos[:min_len]
             
-            if _type == 'basic':
-                gs[_dir] = np.mean(s_r[_dir])
+            # Compute absolute position error
+            error = np.abs(eye_pos - target_pos)
             
-            else:
-                
-                l_g = np.sum(a_d * s_r[_dir])/np.sum(a_d)
-                if _type == 'weighted':
-                    gs[_dir] = l_g 
-                      
-                else:
-                    gs[_dir] = l_g * p_p
+            # Find first index where error is below tolerance
+            valid_indices = np.where(error < tolerance)[0]
+            if valid_indices.size > 0:
+                crossings[direction] = time[valid_indices[0]]
+        
+        results = dict({'crossing time': crossings})
+        
+        return results
+
  
-        return gs
+    
+    def pursuit_task_overall_gain(self, get_raw):
+        
+        _ints = self.pursuit_intervals
+        d_t = 1 / self.config['sampling_frequency']
+        s_idx = self.config['pursuit_start_idx']
+    
+        pos = dict({
+            'x': self.data_set['x_pursuit'],
+            'y': self.data_set['y_pursuit'],
+        })
+        theo = dict({
+            'x': self.data_set['x_theo_pursuit'],
+            'y': self.data_set['y_theo_pursuit'],  # Fixed bug: was x_theo_pursuit
+        })
+     
+        gains = [] 
+        for _int in _ints:
+     
+            # Adjust theoretical data indices
+            theo_start = max(0, _int[0] - s_idx)
+            theo_end = min(len(theo['x']), _int[1] - s_idx + 1)
+      
+            x_e = pos['x'][theo_start: theo_end]
+            y_e = pos['y'][theo_start: theo_end]
+        
+            x_t = theo['x'][theo_start: theo_end]
+            y_t = theo['y'][theo_start: theo_end]
+          
+            s_e_x = x_e[1:]- x_e[:-1]
+            s_e_y = y_e[1:]- y_e[:-1]
+            s_t_x = x_t[1:]- x_t[:-1]
+            s_t_y = y_t[1:]- y_t[:-1]
+            
+            e_vel = np.sqrt((s_e_x/d_t)**2 + (s_e_y/d_t)**2)
+            t_vel = np.sqrt((s_t_x/d_t)**2 + (s_t_y/d_t)**2)
+            
+            l_gains = e_vel/t_vel
+            gains += list(l_gains)
+            
+        results = dict({'overall gain': np.mean(gains),
+                       'raw': np.array(gains)})
+        
+        if not get_raw:
+            del results["raw"]
+            
+        return results
+           
+  
+    def pursuit_task_overall_gain_x(self, get_raw):
+        
+        _ints = self.pursuit_intervals
+        d_t = 1 / self.config['sampling_frequency']
+        s_idx = self.config['pursuit_start_idx']
+    
+        pos = dict({
+            'x': self.data_set['x_pursuit'],
+            'y': self.data_set['y_pursuit'],
+        })
+        theo = dict({
+            'x': self.data_set['x_theo_pursuit'],
+            'y': self.data_set['y_theo_pursuit'],  # Fixed bug: was x_theo_pursuit
+        })
+   
+        gains = [] 
+        for _int in _ints:
+     
+            # Adjust theoretical data indices
+            theo_start = max(0, _int[0] - s_idx)
+            theo_end = min(len(theo['x']), _int[1] - s_idx + 1)
+    
+            x_e = pos['x'][theo_start: theo_end]
+            x_t = theo['x'][theo_start: theo_end] 
+      
+            s_e_x = x_e[1:]- x_e[:-1] 
+            s_t_x = x_t[1:]- x_t[:-1]
+            
+            e_vel = (s_e_x/d_t) 
+            t_vel = (s_t_x/d_t) 
+            
+            l_gains = e_vel/t_vel
+            gains += list(l_gains)
+            
+        results = dict({'overall gain x': np.mean(gains),
+                       'raw': np.array(gains)})
+        
+        if not get_raw:
+            del results["raw"]
+            
+        return results
+        
+    
+    def pursuit_task_overall_gain_y(self, get_raw):
+        
+        _ints = self.pursuit_intervals
+        d_t = 1 / self.config['sampling_frequency']
+        s_idx = self.config['pursuit_start_idx']
+    
+        pos = dict({
+            'x': self.data_set['x_pursuit'],
+            'y': self.data_set['y_pursuit'],
+        })
+        theo = dict({
+            'x': self.data_set['x_theo_pursuit'],
+            'y': self.data_set['y_theo_pursuit'],  # Fixed bug: was x_theo_pursuit
+        })
+     
+        gains = [] 
+        for _int in _ints:
+     
+            # Adjust theoretical data indices
+            theo_start = max(0, _int[0] - s_idx)
+            theo_end = min(len(theo['y']), _int[1] - s_idx + 1)
+      
+            
+            y_e = pos['y'][theo_start: theo_end] 
+            y_t = theo['y'][theo_start: theo_end]
+           
+            s_e_y = y_e[1:]- y_e[:-1] 
+            s_t_y = y_t[1:]- y_t[:-1]
+            
+            e_vel = s_e_y/d_t 
+            t_vel = s_t_y/d_t 
+            
+            l_gains = e_vel/t_vel
+            gains += list(l_gains)
+            
+        results = dict({'overall gain y': np.mean(gains),
+                       'raw': np.array(gains)})
+        
+        if not get_raw:
+            del results["raw"]
+            
+        return results
     
     
-    def pursuit_task_accuracy(self, _type = 'weighted'):
+    
+    def pursuit_task_slopel_gain(self, _type):
+        """
+        Calculate the gain of smooth pursuit eye movements in x and y directions.
+    
+        Parameters
+        ----------
+        _type : str, optional
+            Calculation type: 'mean' (mean of slope ratios), 'weighted' (duration-weighted mean).
+            Default is 'weighted'.
+    
+        Returns
+        -------
+        dict
+            Keys 'x' and 'y' with gain values (float). Returns 0.0 for invalid cases.
+    
+        Notes
+        -----
+        Gain is the ratio of eye velocity to target velocity, derived from slope ratios.
+        """
+        # Check if pursuit intervals are empty; return zero gains if so
+        if not self.pursuit_intervals: 
+            return {'x': 0.0, 'y': 0.0}
+    
+        # Retrieve slope ratios from pursuit_task_slope_ratios method
+        slope_ratios = self.pursuit_task_slope_ratios()['slope ratios']
+    
+        # Compute interval durations by adjusting end indices (add 1 to include last point)
+        intervals = np.array(self.pursuit_intervals) + np.array([[0, 1]])
+        durations = intervals[:, 1] - intervals[:, 0]
+        
+        # Create mask for valid intervals (duration > 0)
+        valid_mask = durations > 0
+        if not valid_mask.any():
+            return {'x': 0.0, 'y': 0.0}
+        valid_durations = durations[valid_mask]
+    
+        # Initialize dictionary to store gain values for x and y directions
+        gains = {}
+        for direction in ['x', 'y']:
+            # Get slope ratios for the current direction (x or y)
+            ratios = slope_ratios.get(direction, np.array([]))
+            
+            # Validate ratios: check if length matches intervals and all values are finite
+            if len(ratios) != len(self.pursuit_intervals) or not np.all(np.isfinite(ratios)):
+                gains[direction] = 0.0
+                continue
+            
+            # Filter ratios to only those corresponding to valid intervals
+            valid_ratios = ratios[valid_mask] 
+            if len(valid_ratios) == 0:
+                gains[direction] = 0.0
+                continue
+            
+            # Calculate gain based on specified type
+            if _type == 'mean':
+                # Basic mode: compute simple mean of valid slope ratios
+                gains[direction] = np.mean(valid_ratios)
+            elif _type == 'weighted': 
+                # Weighted mode: compute duration-weighted mean of slope ratios
+                total_duration = np.sum(valid_durations)
+                if total_duration == 0:
+                    gains[direction] = 0.0
+                    continue
+                gains['gain ' + direction] = np.sum(valid_durations * valid_ratios) / total_duration
+    
+        # Return dictionary with gain values for x and y directions
+        results = dict({'slope gain': gains})
+        
+        return results
+    
+    
+    
+    def pursuit_task_sinusoidal_phase(self):
+        
+        def fit_sin(tt, yy):
+            '''Fit sin to the input time sequence, and return fitting parameters "amp", "omega", "phase", "offset", "freq", "period" and "fitfunc"'''
+            tt = np.array(tt)
+            yy = np.array(yy)
+            ff = np.fft.fftfreq(len(tt), (tt[1]-tt[0]))   # assume uniform spacing
+            Fyy = abs(np.fft.fft(yy))
+            guess_freq = abs(ff[np.argmax(Fyy[1:])+1])   # excluding the zero frequency "peak", which is related to offset
+            guess_amp = np.std(yy) * 2.**0.5
+            guess_offset = np.mean(yy)
+            guess = np.array([guess_amp, 2.*np.pi*guess_freq, 0., guess_offset])
+        
+            def sinfunc(t, A, w, p, c):  return A * np.sin(w*t + p) + c
+            popt, pcov = scipy.optimize.curve_fit(sinfunc, tt, yy, p0=guess)
+            A, w, p, c = popt
+            f = w/(2.*np.pi)
+            fitfunc = lambda t: A * np.sin(w*t + p) + c
+            return {"amp": A, "omega": w, "phase": p, "offset": c, "freq": f, 
+                    "period": 1./f, "fitfunc": fitfunc, "maxcov": np.max(pcov), 
+                    "rawres": (guess,popt,pcov)}
+        
+        #theo_start = max(0, _int[0] - s_idx)
+        #theo_end = min(len(theo['x']), _int[1] - s_idx + 1)
+        
+        d_t = 1 / self.config['sampling_frequency']
+        len_ = len(self.data_set['x_theo_pursuit']) * d_t
+        tt = np.linspace(0, len_ - d_t, len(self.data_set['x_theo_pursuit']))
+        
+        s_idx = self.config['pursuit_start_idx']
+        end_idx = len(self.data_set['x_theo_pursuit']) + s_idx
+        
+        # Ensure the slice doesn't exceed the length of x_pursuit
+        if end_idx > len(self.data_set['x_pursuit']):
+            end_idx = len(self.data_set['x_pursuit'])
+        
+        res1 = fit_sin(tt, self.data_set['x_theo_pursuit'])
+        res2 = fit_sin(tt, self.data_set['x_pursuit'][s_idx:end_idx])
+           
+         
+               
+        if len(self.data_set['x_pursuit'][s_idx:end_idx]) != len(tt):
+            tt_pursuit = np.linspace(0, len(self.data_set['x_pursuit'][s_idx:end_idx]) * d_t - d_t, 
+                                    len(self.data_set['x_pursuit'][s_idx:end_idx]))
+        else:
+            tt_pursuit = tt
+        
+        # Plotting
+        plt.plot(tt_pursuit, self.data_set['x_pursuit'][s_idx:end_idx], "purple", label="Raw pursuit data")
+        plt.plot(tt, res1["fitfunc"](tt), "r--", label="Theoretical fit", linewidth=2)
+        plt.plot(tt, res2["fitfunc"](tt), "b--", label="Pursuit fit", linewidth=2)
+        plt.xlabel("Time (s)")
+        plt.ylabel("Position")
+        plt.title("Pursuit Task Sinusoidal Fit")
+        plt.legend()
+        plt.grid(True)
+        plt.show()
+        plt.clf()
+        
+        results = dict({'phase difference': res1['phase'] - res2['phase']})
+        
+        return results
+         
+                
+        
+    def pursuit_task_accuracy(self,pursuit_accuracy_tolerance, _type ):
         
         a_i = np.array(self.pursuit_intervals) + np.array([[0, 1]])
         a_d = np.array(a_i[:,1] - a_i[:,0])
         
-        s_r = self.slope_ratios()
-        ac_t = self.config['pursuit_accuracy_tolerance']
-        
+        s_r = self.pursuit_task_slope_ratios()
+        ac_t = pursuit_accuracy_tolerance
+      
         acs = dict({})
         for _dir in ['x', 'y']:
-            
-            w_b = np.where(s_r[_dir] < 1+ac_t, 1, 0)*np.where(s_r[_dir] > 1-ac_t, 1, 0)      
-            
+          
+            w_b = np.where(s_r['slope ratios'][_dir] < 1+ac_t, 1, 0)*np.where(s_r['slope ratios'][_dir] > 1-ac_t, 1, 0)      
+            print(w_b)
             if _type == 'weighted':
                 acs[_dir] = np.sum(w_b * a_d)/np.sum(a_d)
                
-            else:
+            elif  _type == 'mean':
                 acs[_dir] = np.mean(w_b)
             
         return acs
@@ -451,13 +736,23 @@ class PursuitTask(TernarySegmentation):
         return entropy
     
     
-    def pursuit_task_entropy(self):
+    def pursuit_task_entropy(self,
+                             pursuit_entropy_window, 
+                             pursuit_entropy_tolerance):
+        
+        
+        print(len(self.data_set['x_pursuit']))
+        print(len(self.data_set['x_theo_pursuit']))
         
         nb_s_p = self.config['nb_samples_pursuit']
+        s_idx = self.config['pursuit_start_idx']
         
-        pos_p = np.concatenate((self.data_set['x_pursuit'].reshape(1, nb_s_p),
-                                self.data_set['y_pursuit'].reshape(1, nb_s_p)), axis = 0)
-
+        
+        
+        
+        pos_p = np.concatenate((self.data_set['x_pursuit'][s_idx:s_idx+nb_s_p].reshape(1, nb_s_p),
+                                self.data_set['y_pursuit'][s_idx:s_idx+nb_s_p].reshape(1, nb_s_p)), axis = 0)
+        print(len(pos_p))
         sp_p = np.zeros_like(pos_p)
         sp_p[:,:-1] = ((pos_p[:,1:] - pos_p[:,:-1])
                      *self.config['sampling_frequency'])
@@ -474,8 +769,8 @@ class PursuitTask(TernarySegmentation):
             
             d_s_v = sp_p[k,:] - sp_t[k,:]
             app_en[_dir] = self.ap_entropy(d_s_v, 
-                                           self.config['pursuit_entropy_window'],
-                                           self.config['pursuit_entropy_tolerance'])
+                                           pursuit_entropy_window,
+                                           pursuit_entropy_tolerance)
         
         return app_en
     
@@ -561,7 +856,7 @@ def pursuit_task_count(input_df, theoretical_df,
                                    sampling_frequency, segmentation_method,
                                    **kwargs_copy)
     results = pursuit_analysis.pursuit_task_count()
-    pursuit_analysis.verbose()
+     
     return results
 
 
@@ -576,7 +871,7 @@ def pursuit_task_frequency(input_df, theoretical_df,
                                    sampling_frequency, segmentation_method,
                                    **kwargs_copy)
     results = pursuit_analysis.pursuit_task_frequency()
-    pursuit_analysis.verbose()
+    
     return results
 
 
@@ -592,7 +887,7 @@ def pursuit_task_duration(input_df, theoretical_df,
                                    sampling_frequency, segmentation_method,
                                    **kwargs_copy)
     results = pursuit_analysis.pursuit_task_duration()
-    pursuit_analysis.verbose()
+   
     return results
 
 
@@ -607,7 +902,97 @@ def pursuit_task_proportion(input_df, theoretical_df,
                                    sampling_frequency, segmentation_method,
                                    **kwargs_copy)
     results = pursuit_analysis.pursuit_task_proportion()
-    pursuit_analysis.verbose()
+    
+    return results 
+
+
+def pursuit_task_velocity(input_df, theoretical_df, 
+                       **kwargs): 
+    
+    kwargs_copy = kwargs.copy()
+    sampling_frequency = kwargs_copy.pop("sampling_frequency", 250)
+    segmentation_method = kwargs_copy.pop("segmentation_method", 'I_VMP')
+    
+    pursuit_analysis = PursuitTask(input_df, theoretical_df, 
+                                   sampling_frequency, segmentation_method,
+                                   **kwargs_copy)
+    results = pursuit_analysis.pursuit_task_velocity()
+    
+    return results 
+
+
+def pursuit_task_velocity_means(input_df, theoretical_df, 
+                       **kwargs): 
+    
+    kwargs_copy = kwargs.copy()
+    sampling_frequency = kwargs_copy.pop("sampling_frequency", 250)
+    segmentation_method = kwargs_copy.pop("segmentation_method", 'I_VMP')
+    
+    pursuit_analysis = PursuitTask(input_df, theoretical_df, 
+                                   sampling_frequency, segmentation_method,
+                                   **kwargs_copy)
+    results = pursuit_analysis.pursuit_task_velocity_means()
+   
+    return results 
+
+
+def pursuit_task_peak_velocity(input_df, theoretical_df, 
+                       **kwargs): 
+    
+    kwargs_copy = kwargs.copy()
+    sampling_frequency = kwargs_copy.pop("sampling_frequency", 250)
+    segmentation_method = kwargs_copy.pop("segmentation_method", 'I_VMP')
+    
+    pursuit_analysis = PursuitTask(input_df, theoretical_df, 
+                                   sampling_frequency, segmentation_method,
+                                   **kwargs_copy)
+    results = pursuit_analysis.pursuit_task_peak_velocity()
+   
+    return results 
+
+
+def pursuit_task_amplitude(input_df, theoretical_df, 
+                       **kwargs): 
+    
+    kwargs_copy = kwargs.copy()
+    sampling_frequency = kwargs_copy.pop("sampling_frequency", 250)
+    segmentation_method = kwargs_copy.pop("segmentation_method", 'I_VMP')
+    
+    pursuit_analysis = PursuitTask(input_df, theoretical_df, 
+                                   sampling_frequency, segmentation_method,
+                                   **kwargs_copy)
+    results = pursuit_analysis.pursuit_task_amplitude()
+   
+    return results 
+
+
+def pursuit_task_distance(input_df, theoretical_df, 
+                       **kwargs): 
+    
+    kwargs_copy = kwargs.copy()
+    sampling_frequency = kwargs_copy.pop("sampling_frequency", 250)
+    segmentation_method = kwargs_copy.pop("segmentation_method", 'I_VMP')
+    
+    pursuit_analysis = PursuitTask(input_df, theoretical_df, 
+                                   sampling_frequency, segmentation_method,
+                                   **kwargs_copy)
+    results = pursuit_analysis.pursuit_task_distance()
+    
+    return results 
+
+
+def pursuit_task_efficiency(input_df, theoretical_df, 
+                       **kwargs): 
+    
+    kwargs_copy = kwargs.copy()
+    sampling_frequency = kwargs_copy.pop("sampling_frequency", 250)
+    segmentation_method = kwargs_copy.pop("segmentation_method", 'I_VMP')
+    
+    pursuit_analysis = PursuitTask(input_df, theoretical_df, 
+                                   sampling_frequency, segmentation_method,
+                                   **kwargs_copy)
+    results = pursuit_analysis.pursuit_task_efficiency()
+    
     return results 
 
 
@@ -622,15 +1007,135 @@ def pursuit_task_slope_ratios(input_df, theoretical_df,
                                    sampling_frequency, segmentation_method,
                                    **kwargs_copy)
     results = pursuit_analysis.pursuit_task_slope_ratios()
-    pursuit_analysis.verbose()
+   
+    return results 
+
+
+def pursuit_task_crossing_time(input_df, theoretical_df, 
+                               **kwargs): 
+    
+    kwargs_copy = kwargs.copy()
+    sampling_frequency = kwargs_copy.pop("sampling_frequency", 250)
+    segmentation_method = kwargs_copy.pop("segmentation_method", 'I_VMP')
+    
+    pursuit_analysis = PursuitTask(input_df, theoretical_df, 
+                                   sampling_frequency, segmentation_method,
+                                   **kwargs_copy)
+    tolerance = kwargs.get("tolerance", 1.0)
+    results = pursuit_analysis.pursuit_task_crossing_time(tolerance)
+   
+    return results 
+     
+
+def pursuit_task_overall_gain(input_df, theoretical_df, 
+                               **kwargs): 
+    
+    get_raw = kwargs.get("get_raw", True)
+    kwargs_copy = kwargs.copy()
+    sampling_frequency = kwargs_copy.pop("sampling_frequency", 250)
+    segmentation_method = kwargs_copy.pop("segmentation_method", 'I_VMP')
+    
+    pursuit_analysis = PursuitTask(input_df, theoretical_df, 
+                                   sampling_frequency, segmentation_method, 
+                                   **kwargs_copy)
+    results = pursuit_analysis.pursuit_task_overall_gain(get_raw)
+    
+    return results 
+
+
+def pursuit_task_overall_gain_x(input_df, theoretical_df, 
+                               **kwargs): 
+    
+    get_raw = kwargs.get("get_raw", True)
+    kwargs_copy = kwargs.copy()
+    sampling_frequency = kwargs_copy.pop("sampling_frequency", 250)
+    segmentation_method = kwargs_copy.pop("segmentation_method", 'I_VMP')
+    
+    pursuit_analysis = PursuitTask(input_df, theoretical_df, 
+                                   sampling_frequency, segmentation_method, 
+                                   **kwargs_copy)
+    results = pursuit_analysis.pursuit_task_overall_gain_x(get_raw)
+    
+    return results 
+
+
+def pursuit_task_overall_gain_y(input_df, theoretical_df, 
+                               **kwargs): 
+    
+    get_raw = kwargs.get("get_raw", True)
+    kwargs_copy = kwargs.copy()
+    sampling_frequency = kwargs_copy.pop("sampling_frequency", 250)
+    segmentation_method = kwargs_copy.pop("segmentation_method", 'I_VMP')
+    
+    pursuit_analysis = PursuitTask(input_df, theoretical_df, 
+                                   sampling_frequency, segmentation_method, 
+                                   **kwargs_copy)
+    results = pursuit_analysis.pursuit_task_overall_gain_y(get_raw)
+   
     return results 
 
 
 
+def pursuit_task_sinusoidal_phase(input_df, theoretical_df, 
+                               **kwargs): 
+
+   get_raw = kwargs.get("get_raw", True)
+   kwargs_copy = kwargs.copy()
+   sampling_frequency = kwargs_copy.pop("sampling_frequency", 250)
+   segmentation_method = kwargs_copy.pop("segmentation_method", 'I_VMP')
+   
+   pursuit_analysis = PursuitTask(input_df, theoretical_df, 
+                                  sampling_frequency, segmentation_method, 
+                                  **kwargs_copy)
+   results = pursuit_analysis.pursuit_task_sinusoidal_phase()
+    
+   return results
+
+
+def pursuit_task_accuracy(input_df, theoretical_df, 
+                               **kwargs): 
+
+   get_raw = kwargs.get("get_raw", True)
+   pursuit_accuracy_tolerance = kwargs.get("pursuit_accuracy_tolerance", .15)
+   _type = kwargs.get('_type', 'mean')
+   
+   kwargs_copy = kwargs.copy()
+   sampling_frequency = kwargs_copy.pop("sampling_frequency", 250)
+   segmentation_method = kwargs_copy.pop("segmentation_method", 'I_VMP')
+   
+   pursuit_analysis = PursuitTask(input_df, theoretical_df, 
+                                  sampling_frequency, segmentation_method, 
+                                  **kwargs_copy)
+   results = pursuit_analysis.pursuit_task_accuracy(pursuit_accuracy_tolerance=.15,
+                                                    _type='mean')
+    
+   return results
+
+
+ 
+
+def pursuit_task_entropy(input_df, theoretical_df, 
+                               **kwargs): 
+
+   get_raw = kwargs.get("get_raw", True)
+   kwargs_copy = kwargs.copy()
+   sampling_frequency = kwargs_copy.pop("sampling_frequency", 250)
+   segmentation_method = kwargs_copy.pop("segmentation_method", 'I_VMP')
+   
+   pursuit_analysis = PursuitTask(input_df, theoretical_df, 
+                                  sampling_frequency, segmentation_method, 
+                                  **kwargs_copy)
+   results = pursuit_analysis.pursuit_task_entropy()
+    
+   return results
 
 
 
 
 
 
-     
+
+
+
+
+

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import segmentation_src as seg
+from vision_toolkit.segmentation.processing.learning_segmentation import DLTraining
 
 root = 'dataset/DS_Hollywood2/'
 #root = 'dataset/DS_Hollywood2/'
@@ -12,11 +12,11 @@ idx = [1, 2, 3, 4, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20, 21, 23,
 training_set = [root + 'gaze_s{i}.csv'.format(i = i) for i in idx]
 label_set = [root + 'labels_s{i}.csv'.format(i = i) for i in idx]
 
-s = seg.DLTraining.fit_predict(training_set,
+s = DLTraining.hard_fit(training_set,
                                label_set,
                                sampling_frequency = 500, 
-                               segmentation_method = 'I_VVT', 
-                               task = 'ternary',
+                               segmentation_method = 'I_CNN', 
+                               task = 'binary',
                                #classifier = 'rf',
                                distance_type = 'angular',
                                display_segmentation = True,
@@ -30,3 +30,4 @@ s = seg.DLTraining.fit_predict(training_set,
 # Hollywood2: 600.0
 #             475.0
 #             280.0
+

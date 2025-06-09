@@ -20,7 +20,7 @@ from sklearn.model_selection import train_test_split
 
 from vision_toolkit.segmentation.processing.ternary_segmentation import TernarySegmentation as Segmentation 
 from vision_toolkit.segmentation.segmentation_algorithms.I_CNN import CNN1D
-from vision_toolkit.segmentation.utils.segmentation_utils import dict_vectorize, standard_normalization
+from vision_toolkit.utils.segmentation_utils import dict_vectorize, standard_normalization
 
 
 class DLTraining():
@@ -461,9 +461,9 @@ class MLTraining():
             norm_ = np.array([mu, sigma])
             
             path = 'segmentation_src/segmentation_algorithms/trained_models/{sm}/normalization_{task}.npy'.format(
-                sm = segmentation_method,
-                task = mt.meta_config['task']
-                )
+                                            sm = segmentation_method,
+                                            task = mt.meta_config['task']
+                                            )
             
             np.save(path, norm_)
             
@@ -473,10 +473,10 @@ class MLTraining():
         clf.fit(train_features, train_labels)
          
         path = path = 'segmentation_src/segmentation_algorithms/trained_models/{sm}/i_{cl}_{task}.joblib'.format(
-            sm = segmentation_method,
-            cl = mt.meta_config['classifier'],
-            task = mt.meta_config['task']
-            )
+                                            sm = segmentation_method,
+                                            cl = mt.meta_config['classifier'],
+                                            task = mt.meta_config['task']
+                                            )
         
         joblib.dump(clf, path)
         
