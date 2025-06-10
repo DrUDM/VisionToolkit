@@ -9,4 +9,4 @@ v.processing_rim(gaze_data = 'input_rim/_gaze.csv',
                  reference_image = 'input_rim/_reference_image.jpg',
                  world_camera = 'input_rim/_worldCamera.mp4',
                  output_name = '_gaze',
-                 output_dir = 'mappedGazeOutput')
+                 output_dir =   'mappedGazeOutput')
