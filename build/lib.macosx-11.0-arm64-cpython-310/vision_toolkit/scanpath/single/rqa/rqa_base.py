@@ -104,6 +104,5 @@ class RecurrenceBase:
                             ## after unshifting x-values
                             d_set.append(
                                 np.array([c_i, [c + c_i[i] for i in range(len(c_i))]]).T
-                            )
-
+                            ) 
         return d_set

@@ -48,7 +48,7 @@ class FixationAnalysis(BinarySegmentation):
         assert (
             len(self.segmentation_results["fixation_intervals"]) > 0
         ), "No fixation identified"
-
+       
         if verbose:
             print("...Fixation Analysis done\n")
 

@@ -35,7 +35,9 @@ class FrequencyAnalysis(SignalBased):
         if verbose:
             print("...Frequency Analysis done")
 
-    def periodogram(self, type_, silent=False):
+
+
+    def periodogram(self, periodogram_data_type, silent=False):
         """
 
 
@@ -55,7 +57,7 @@ class FrequencyAnalysis(SignalBased):
 
         s_f = self.config["sampling_frequency"]
 
-        if type_ == "velocity":
+        if periodogram_data_type == "velocity":
             sp = process_speed_components(self.data_set, self.config)[0:2, :]
 
             data = dict({"x_array": sp[0], "y_array": sp[1]})
@@ -63,12 +65,14 @@ class FrequencyAnalysis(SignalBased):
         densities = dict()
 
         for _dir in ["x_array", "y_array"]:
-            if type_ == "velocity":
+            if periodogram_data_type == "velocity":
                 x = data[_dir]
 
-            else:
+            elif periodogram_data_type == 'position':
                 x = self.data_set[_dir]
-
+            
+            else:
+                raise ValueError('periodogram_data_type must be "position" or "velocity')
             nperseg = x.shape[-1]
             freqs, p_xx = periodogram_(x, fs=s_f, nperseg=nperseg)
             densities.update({_dir[0]: p_xx})
@@ -81,7 +85,8 @@ class FrequencyAnalysis(SignalBased):
 
         return results
 
-    def welch_periodogram(self, type_, samples_per_segment, silent=False):
+    def welch_periodogram(self, periodogram_data_type, 
+                          Welch_samples_per_segment, silent=False):
         """
 
 
@@ -103,20 +108,23 @@ class FrequencyAnalysis(SignalBased):
 
         s_f = self.config["sampling_frequency"]
 
-        if type_ == "velocity":
+        if periodogram_data_type == "velocity":
             sp = process_speed_components(self.data_set, self.config)[0:2, :]
             data = dict({"x_array": sp[0], "y_array": sp[1]})
 
         densities = dict()
 
         for _dir in ["x_array", "y_array"]:
-            if type_ == "velocity":
+            if periodogram_data_type == "velocity":
                 x = data[_dir]
 
-            else:
+            elif periodogram_data_type == 'position':
                 x = self.data_set[_dir]
-
-            freqs, p_xx = welch_(x, fs=s_f, nperseg=samples_per_segment)
+            
+            else:
+                raise ValueError('periodogram_data_type must be "position" or "velocity')
+                
+            freqs, p_xx = welch_(x, fs=s_f, nperseg=Welch_samples_per_segment)
             densities.update({_dir[0]: p_xx})
 
         if self.config["display_results"]:
@@ -151,18 +159,26 @@ class CrossFrequencyAnalysis:
         None.
 
         """
-
+         
+        verbose = kwargs.get("verbose", True)
+        if verbose:
+            print("Processing Cross Frequency Analysis...")
+        
         self.s_f = kwargs.get("sampling_frequency", None)
         assert self.s_f is not None, "Sampling frequency must be specified"
 
-        self.type_ = kwargs.get("csd_data_type", "velocity")
+        #self.type_ = kwargs.get("csd_data_type", "velocity")
 
         self.fa_1 = FrequencyAnalysis(input[0], **kwargs)
         self.fa_2 = FrequencyAnalysis(input[1], **kwargs)
 
         # Configs are the same
-        self.config = self.fa_1.config
-        del self.config["nb_samples"]
+        self.config = self.fa_1.config 
+
+        if verbose:
+            print("...Cross Frequency Analysis done")
+
+
 
     def verbose(self, add_=None):
         if self.config["verbose"]:
@@ -184,7 +200,7 @@ class CrossFrequencyAnalysis:
                     )
             print("\n")
 
-    def cross_spectral_density(self, type_):
+    def cross_spectral_density(self, cross_data_type):
         """
 
 
@@ -202,7 +218,8 @@ class CrossFrequencyAnalysis:
 
         s_f = self.s_f
 
-        if type_ == "velocity":
+        if cross_data_type == "velocity":
+            print(self.fa_1.config)
             sp_1 = process_speed_components(self.fa_1.data_set, self.fa_1.config)[
                 0:2, :
             ]
@@ -216,7 +233,7 @@ class CrossFrequencyAnalysis:
         c_densities = dict()
 
         for _dir in ["x_array", "y_array"]:
-            if type_ == "velocity":
+            if cross_data_type == "velocity":
                 x_1 = data_1[_dir]
                 x_2 = data_2[_dir]
 
@@ -257,6 +274,7 @@ class CrossFrequencyAnalysis:
 
         """
 
+        
         s_f = self.s_f
 
         if type_ == "velocity":
@@ -292,46 +310,37 @@ class CrossFrequencyAnalysis:
 
         return results
 
-    def signal_coherency(
-        self,
-        type_,
-        samples_per_segment,
-    ):
+    def signal_coherency(self, cross_data_type, samples_per_segment):
         """
-
-
         Returns
         -------
-        results : TYPE
-            DESCRIPTION.
-
+        results : dict
+            Dictionary containing frequencies and signal coherencies.
         """
-
         pxy_s = self.welch_cross_spectral_density(
-            type_, samples_per_segment, silent=True
+            cross_data_type, samples_per_segment, silent=True
         )
-
-        pxx_s = self.fa_1.welch_periodogram(type_, samples_per_segment, silent=True)
-        pyy_s = self.fa_2.welch_periodogram(type_, samples_per_segment, silent=True)
-
+    
+        pxx_s = self.fa_1.welch_periodogram(cross_data_type, samples_per_segment, silent=True)
+        pyy_s = self.fa_2.welch_periodogram(cross_data_type, samples_per_segment, silent=True)
+    
         freqs = pxy_s["frequencies"]
-
+    
         coherencies = dict()
-
+    
         for _dir in ["x", "y"]:
             p_xy = pxy_s["cross_spectral_densities"][_dir]
-
             p_xx = pxx_s["spectral_densities"][_dir]
             p_yy = pyy_s["spectral_densities"][_dir]
-
+    
             c_xy = np.abs(p_xy) ** 2 / (p_xx * p_yy)
             coherencies.update({_dir: c_xy})
-
+    
         if self.config["display_results"]:
             plot_periodogram(freqs, coherencies, cross=True)
-
+    
         results = dict({"frequencies": freqs, "signal_coherencies": coherencies})
-
+    
         return results
 
 
@@ -381,11 +390,11 @@ def welch_periodogram(input, **kwargs):
 
 
 def cross_spectral_density(input, **kwargs):
-    type_ = kwargs.get("periodogram_data_type", "velocity")
+    cross_data_type = kwargs.get("cross_data_type", "velocity")
 
     if isinstance(input, CrossFrequencyAnalysis):
-        results = input.cross_spectral_density(type_)
-        input.verbose(dict({"periodogram_data_type": type_}))
+        results = input.cross_spectral_density(cross_data_type)
+        input.verbose(dict({"cross_data_type": cross_data_type}))
 
     else:
         assert (
@@ -396,22 +405,22 @@ def cross_spectral_density(input, **kwargs):
         ), "Input must be a CrossFrequencyAnalysis instance or list of two csv"
 
         cross_analysis = CrossFrequencyAnalysis([input[0], input[1]], **kwargs)
-        results = cross_analysis.cross_spectral_density(type_)
-        cross_analysis.verbose(dict({"periodogram_data_type": type_}))
+        results = cross_analysis.cross_spectral_density(cross_data_type)
+        cross_analysis.verbose(dict({"cross_data_type": cross_data_type}))
 
     return results
 
 
 def welch_cross_spectral_density(input, **kwargs):
-    type_ = kwargs.get("periodogram_data_type", "velocity")
+    cross_data_type = kwargs.get("cross_data_type", "velocity")
     samples_per_segment = kwargs.get("Welch_samples_per_segment", 256)
 
     if isinstance(input, CrossFrequencyAnalysis):
-        results = input.welch_cross_spectral_density(type_, samples_per_segment)
+        results = input.welch_cross_spectral_density(cross_data_type, samples_per_segment)
         input.verbose(
             dict(
                 {
-                    "periodogram_data_type": type_,
+                    "cross_data_type": cross_data_type,
                     "Welch_samples_per_segment": samples_per_segment,
                 }
             )
@@ -427,12 +436,12 @@ def welch_cross_spectral_density(input, **kwargs):
 
         cross_analysis = CrossFrequencyAnalysis([input[0], input[1]], **kwargs)
         results = cross_analysis.welch_cross_spectral_density(
-            type_, samples_per_segment
+            cross_data_type, samples_per_segment
         )
         cross_analysis.verbose(
             dict(
                 {
-                    "periodogram_data_type": type_,
+                    "cross_data_type": cross_data_type,
                     "Welch_samples_per_segment": samples_per_segment,
                 }
             )
@@ -442,20 +451,19 @@ def welch_cross_spectral_density(input, **kwargs):
 
 
 def signal_coherency(input, **kwargs):
-    type_ = kwargs.get("periodogram_data_type", "velocity")
+    cross_data_type = kwargs.get("cross_data_type", "velocity")
     samples_per_segment = kwargs.get("Welch_samples_per_segment", 256)
 
     if isinstance(input, CrossFrequencyAnalysis):
-        results = input.signal_coherency(type_, samples_per_segment)
+        results = input.signal_coherency(cross_data_type, samples_per_segment)
         input.verbose(
             dict(
                 {
-                    "periodogram_data_type": type_,
+                    "cross_data_type": cross_data_type,
                     "Welch_samples_per_segment": samples_per_segment,
                 }
             )
         )
-
     else:
         assert (
             len(input) == 2 and type(input) == list
@@ -465,11 +473,11 @@ def signal_coherency(input, **kwargs):
         ), "Input must be a CrossFrequencyAnalysis instance or list of two csv"
 
         cross_analysis = CrossFrequencyAnalysis([input[0], input[1]], **kwargs)
-        results = cross_analysis.signal_coherency(type_, samples_per_segment)
+        results = cross_analysis.signal_coherency(cross_data_type, samples_per_segment)
         cross_analysis.verbose(
             dict(
                 {
-                    "periodogram_data_type": type_,
+                    "cross_data_type": cross_data_type,
                     "Welch_samples_per_segment": samples_per_segment,
                 }
             )

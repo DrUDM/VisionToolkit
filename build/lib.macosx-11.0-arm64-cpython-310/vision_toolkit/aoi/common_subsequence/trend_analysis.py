@@ -399,7 +399,11 @@ class TrendAnalysis:
 
 
 def AoI_trend_analysis(input, **kwargs):
+    
     ta = TrendAnalysis(input, **kwargs)
     results = dict({"AoI_trend_analysis_common_subsequence": ta.common_subsequence})
 
     return results
+
+
+

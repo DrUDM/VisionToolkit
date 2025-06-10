@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import numpy as np
 from scipy.stats import gamma 
 
@@ -67,7 +65,7 @@ class SaccadeAnalysis(BinarySegmentation):
 
         ct = len(self.segmentation_results["saccade_intervals"])
         result = dict({"count": ct})
-
+  
         return result
 
     def saccade_frequency(self):

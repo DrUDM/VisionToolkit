@@ -1,0 +1,23 @@
+bitarray
+bokeh
+bokeh_sampledata
+gudhi
+hilbertcurve
+holoviews
+lempel_ziv_complexity
+matplotlib
+networkx
+numpy
+imageio
+opencv-python
+pandas
+panel
+plotly
+scikit-learn
+scipy
+seaborn
+shapely
+torch>=1.12
+torchvision>=0.13
+treelib==1.6.4
+gluestick@ git+https://github.com/cvg/GlueStick.git

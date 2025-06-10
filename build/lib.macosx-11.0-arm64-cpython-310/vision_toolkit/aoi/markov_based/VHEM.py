@@ -3,6 +3,7 @@
 
  
 import numpy as np
+import math
 from typing import List, Tuple, Iterator
 
 from scipy.stats import rv_continuous
@@ -216,43 +217,6 @@ def vhem_step(base, reduced, τ, N):
 
 
 
-class H3M:
-    """
-    H3M class representing a collection of HMMs with associated weights.
-    """
-    def __init__(self, M: List['AbstractHMM'], ω: List[float] = None):
-        if ω is None:
-            ω = [1 / len(M)] * len(M)  # Uniform weights if not provided
-        self._assert_h3m(M, ω)
-        self.M = M  # List of HMMs
-        self.ω = np.array(ω)  # Probabilistic weights (normalized)
-
-    @staticmethod
-    def _assert_h3m(M: List['AbstractHMM'], ω: List[float]) -> bool:
-        if len(M) != len(ω):
-            raise ValueError("The number of HMMs must match the number of weights.")
-        if not np.isclose(sum(ω), 1.0) or any(w < 0 for w in ω):
-            raise ValueError("Weights must form a valid probability vector (non-negative and sum to 1).")
-        return True
-
-    def __len__(self) -> int:
-        """
-        Returns the number of HMMs in the collection.
-        """
-        return len(self.M)
-
-    def __iter__(self) -> Iterator[Tuple['AbstractHMM', float]]:
-        """
-        Iterates over the HMMs and their corresponding weights.
-        """
-        return iter(zip(self.M, self.ω))
-
-# Utility Functions
-def is_prob_vector(vector: List[float]) -> bool:
-    """
-    Checks if a vector is a valid probability vector.
-    """
-    return np.isclose(sum(vector), 1.0) and all(v >= 0 for v in vector)
 
 
 class LogSumExpAcc:
@@ -423,3 +387,51 @@ def loglikelihood_va(hmm1, hmm2, τ):
             lgmm[β, ρ] = lb
 
     return logeta, lgmm, loglikelihood_va_hmm(hmm1, hmm2, lgmm, τ)
+
+
+
+class H3M:
+    """
+    H3M class representing a collection of HMMs with associated weights.
+    """
+    def __init__(self, M: List['AbstractHMM'], ω: List[float] = None):
+        if ω is None:
+            ω = [1 / len(M)] * len(M)  # Uniform weights if not provided
+        self._assert_h3m(M, ω)
+        self.M = M  # List of HMMs
+        self.ω = np.array(ω)  # Probabilistic weights (normalized)
+
+    @staticmethod
+    def _assert_h3m(M: List['AbstractHMM'], ω: List[float]) -> bool:
+        if len(M) != len(ω):
+            raise ValueError("The number of HMMs must match the number of weights.")
+        if not np.isclose(sum(ω), 1.0) or any(w < 0 for w in ω):
+            raise ValueError("Weights must form a valid probability vector (non-negative and sum to 1).")
+        return True
+
+    def __len__(self) -> int:
+        """
+        Returns the number of HMMs in the collection.
+        """
+        return len(self.M)
+
+    def __iter__(self) -> Iterator[Tuple['AbstractHMM', float]]:
+        """
+        Iterates over the HMMs and their corresponding weights.
+        """
+        return iter(zip(self.M, self.ω))
+
+# Utility Functions
+def is_prob_vector(vector: List[float]) -> bool:
+    """
+    Checks if a vector is a valid probability vector.
+    """
+    return np.isclose(sum(vector), 1.0) and all(v >= 0 for v in vector)
+
+
+
+
+
+
+
+

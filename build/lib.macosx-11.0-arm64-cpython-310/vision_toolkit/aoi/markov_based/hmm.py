@@ -36,7 +36,7 @@ class AoIHMM:
         None.
 
         """
-      
+        
         self.obs = input
         self.aoi_seq = Z
 

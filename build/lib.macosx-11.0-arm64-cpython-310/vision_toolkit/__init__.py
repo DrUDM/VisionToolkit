@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 
+## For reference image mapping
+from .reference_image_mapper.main import processing_rim
 
 ## For Oculomotor Processing
 from .oculomotor.segmentation_based.fixation import (
@@ -10,6 +12,8 @@ from .oculomotor.segmentation_based.fixation import (
     fixation_count, fixation_drift_displacements, fixation_drift_distances,
     fixation_drift_velocities, fixation_durations, fixation_frequency,
     fixation_frequency_wrt_labels, fixation_mean_velocities)
+
+
 from .oculomotor.segmentation_based.saccade import (
     SaccadeAnalysis, 
     saccade_acceleration_deceleration_ratios,
@@ -29,17 +33,72 @@ from .oculomotor.segmentation_based.saccade import (
     saccade_peak_velocity_velocity_ratios, saccade_skewness_exponents,
     saccade_gamma_skewness_exponents,
     saccade_successive_deviations, saccade_travel_distances)
-from .oculomotor.signal_based.frequency import (CrossFrequencyAnalysis,
-                                                FrequencyAnalysis,
-                                                cross_spectral_density,
-                                                periodogram, signal_coherency,
-                                                welch_cross_spectral_density,
-                                                welch_periodogram)
+
+
+## For Oculomotor Processing
+from.oculomotor.segmentation_based.pursuit import (
+    PursuitAnalysis,
+    pursuit_count,
+    pursuit_frequency,
+    pursuit_duration, 
+    pursuit_proportion,
+    pursuit_velocity,
+    pursuit_velocity_means,
+    pursuit_peak_velocity, 
+    pursuit_amplitude,
+    pursuit_distance,
+    pursuit_efficiency
+    )
+
+from .oculomotor.segmentation_based.pursuit_task import (
+    PursuitTask, 
+    pursuit_task_count,
+    pursuit_task_frequency,
+    pursuit_task_duration,
+    pursuit_task_proportion,
+    pursuit_task_velocity,
+    pursuit_task_velocity_means,
+    pursuit_task_peak_velocity,
+    pursuit_task_amplitude, 
+    pursuit_task_distance, 
+    pursuit_task_efficiency,
+    pursuit_task_slope_ratios,
+    pursuit_task_crossing_time, 
+    pursuit_task_overall_gain,
+    pursuit_task_sinusoidal_phase,
+    pursuit_task_accuracy,
+    pursuit_task_entropy
+    )
+
+
+from .oculomotor.signal_based.signal_based_base import SignalBased
+
+from .oculomotor.signal_based.frequency import (
+    CrossFrequencyAnalysis,
+    FrequencyAnalysis,
+    cross_spectral_density,
+    periodogram, signal_coherency,
+    welch_cross_spectral_density,
+    welch_periodogram)
+
+
 from .oculomotor.signal_based.stochastic import (DACF, DFA, MSD,
                                                  StochasticAnalysis)
 
+
+
 ## For Scanpath Processing
 from .scanpath.scanpath_base import Scanpath
+from .scanpath.similarity.saliency.saliency_comparison import (
+    SaliencyReference, 
+    scanpath_saliency_percentile,
+    scanpath_saliency_nss)
+from .scanpath.similarity.crqa.crqa import (
+    CRQAAnalysis, 
+    scanpath_CRQA_recurrence_rate, 
+    scanpath_CRQA_laminarity, 
+    scanpath_CRQA_determinism, 
+    scanpath_CRQA_entropy)
 from .scanpath.similarity.character_based.string_edit_distance.string_edit_distance import (
     ScanpathStringEditDistance, 
     scanpath_generalized_edit_distance,
@@ -57,18 +116,27 @@ from .scanpath.similarity.distance_based.point_mapping.point_mapping import (
 from .scanpath.similarity.specific_similarity_metrics.multimatch_alignment import scanpath_multimatch_alignment
 from .scanpath.similarity.specific_similarity_metrics.scanmatch_score import scanpath_scanmatch_score
 from .scanpath.similarity.specific_similarity_metrics.subsmatch_similarity import scanpath_subsmatch_similarity
-from .scanpath.single.geometrical.geometrical import (GeometricalAnalysis,
-                                                      scanpath_BCEA,
-                                                      scanpath_convex_hull,
-                                                      scanpath_HFD,
-                                                      scanpath_k_coefficient,
-                                                      scanpath_length,
-                                                      scanpath_voronoi_cells)
-from .scanpath.single.rqa.rqa import (RQAAnalysis, scanapath_RQA_CORM,
-                                      scanapath_RQA_determinism,
-                                      scanapath_RQA_entropy,
-                                      scanapath_RQA_laminarity,
-                                      scanapath_RQA_recurrence_rate)
+from .scanpath.single.geometrical.geometrical import (
+    GeometricalAnalysis,
+    scanpath_BCEA,
+    scanpath_convex_hull,
+    scanpath_HFD,
+    scanpath_k_coefficient,
+    scanpath_length,
+    scanpath_voronoi_cells)
+from .scanpath.single.rqa.rqa import (
+    RQAAnalysis, 
+    scanpath_RQA_CORM,
+    scanpath_RQA_determinism,
+    scanpath_RQA_entropy,
+    scanpath_RQA_laminarity,
+    scanpath_RQA_recurrence_rate)
+from .scanpath.single.saliency.saliency_map_base import (
+    SaliencyMap, 
+    scanpath_saliency_map)
+
+
+
 
 ## For Segmentation Processing
 from .segmentation.processing.binary_segmentation import BinarySegmentation
@@ -85,6 +153,10 @@ from .visualization.aoi.transition_based.directed_graph import (
 from .visualization.aoi.transition_based.transition_flow import (
     AoI_transition_flow)
 
+
+
+
+
 ## For AoI Processing
 from .aoi.aoi_base import AoI_sequences, AoIMultipleSequences, AoISequence
 from .aoi.basic.basic import AoIBasicAnalysis
@@ -100,13 +172,14 @@ from .aoi.global_alignment.string_edit_distance import (
     AoI_levenshtein_distance,
     AoI_needleman_wunsch_distance, 
     AoIStringEditDistance)
-from .aoi.markov_based.markov_based import (AoI_HMM, AoI_HMM_fisher_vector,
-                                            AoI_HMM_transition_entropy,
-                                            AoI_HMM_transition_matrix,
-                                            AoI_successor_representation,
-                                            AoI_transition_entropy,
-                                            AoI_transition_matrix,
-                                            MarkovBasedAnalysis)
+from .aoi.markov_based.markov_based import (
+    AoI_HMM, AoI_HMM_fisher_vector,
+    AoI_HMM_transition_entropy,
+    AoI_HMM_transition_matrix,
+    AoI_successor_representation,
+    AoI_transition_entropy,
+    AoI_transition_matrix,
+    MarkovBasedAnalysis)
 from .aoi.pattern_mining.lempel_ziv import AoI_lempel_ziv
 from .aoi.pattern_mining.n_gram import AoI_NGram
 from .aoi.pattern_mining.spam import AoI_SPAM

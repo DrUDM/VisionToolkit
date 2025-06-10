@@ -1,0 +1,56 @@
+Metadata-Version: 2.4
+Name: vision_toolkit
+Version: 0.1
+Summary: Vision Toolkit
+Author: Dr UDM
+Author-email: dr.udm.darcy@gmail.com
+Maintainer: Dr UDM
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown
+Requires-Dist: bitarray
+Requires-Dist: bokeh
+Requires-Dist: bokeh_sampledata
+Requires-Dist: gudhi
+Requires-Dist: hilbertcurve
+Requires-Dist: holoviews
+Requires-Dist: lempel_ziv_complexity
+Requires-Dist: matplotlib
+Requires-Dist: networkx
+Requires-Dist: numpy
+Requires-Dist: imageio
+Requires-Dist: opencv-python
+Requires-Dist: pandas
+Requires-Dist: panel
+Requires-Dist: plotly
+Requires-Dist: scikit-learn
+Requires-Dist: scipy
+Requires-Dist: seaborn
+Requires-Dist: shapely
+Requires-Dist: torch>=1.12
+Requires-Dist: torchvision>=0.13
+Requires-Dist: treelib==1.6.4
+Requires-Dist: gluestick@ git+https://github.com/cvg/GlueStick.git
+
+# VisionToolkit
+
+## Install
+
+To install the `vision_toolkit` package which contains our library, run
+
+```bash
+python -m pip install .
+```
+
+## Notebooks
+
+To run the notebooks, download the `documentation/demo/` folder.
+The notebooks will be expanded and further detailed by January.
+
+## Updates
+
+Note that certain functions --- specifically `aoi_visualization`, `saliency_comparison`, `saccade_task` and `pursuit_task` --- are still under internal review and will be added by January.
+Additionally, the RIM functionality is currently hosted in a separate Git repository due to its large size.
+
+
+
+python setup.py build_ext --inplace

@@ -33,6 +33,7 @@ class Basic_Processing:
         smoothing = smg.Smoothing(data_set, config)
         data_set = smoothing.process()
 
+        print(config)
         if config["distance_type"] == "euclidean":
             data_set.update(
                 {"absolute_speed": process_euclidian_absolute_speeds(data_set, config)}
